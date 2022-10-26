@@ -19,10 +19,10 @@ Follow any of the below method and then deploy the binary
 
 * #### Docker/Docker-Compose
     - [Docker Hub](https://hub.docker.com/repository/docker/iganesh/adguardhome-dark)
-    - [GHCR.IO](https://github.com/iganeshk/AdGuardHome-Dark)
+    - [GHCR.IO](https://github.com/iganeshk/AdGuardHome-Dark/pkgs/container/AdGuardHome-Dark)
 
 * #### Binary Releases
-    - [Github Releases](https://github.com/iganeshk/adguardhome-test/releases)
+    - [Github Releases](https://github.com/iganeshk/AdGuardHome-Dark/releases)
 
 * #### Build
 
