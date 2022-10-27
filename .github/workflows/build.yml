@@ -30,6 +30,7 @@ jobs:
       with:
         repository: AdguardTeam/AdGuardHome
         path: ${{ env.ADGUARDHOME_BUILD_DIR }}
+        fetch-depth: 0
 
     - name: 'Fetch Dark Theme Patch'
       working-directory: '${{ env.ADGUARDHOME_BUILD_DIR }}'
