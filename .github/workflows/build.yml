@@ -1,114 +1,120 @@
-'name': 'Clone and build'
+name: 'Build AdGuardHome with Dark Theme'
 
-'env':
-  'GO_VERSION': '1.18.7'
-  'NODE_VERSION': '14'
-  'ADGUARDHOME_BUILD_DIR': './adguardhome'
+env:
+  GO_VERSION: '1.18.7'
+  NODE_VERSION: '14'
+  ADGUARDHOME_BUILD_DIR: './adguardhome'
 
-'on':
+on:
   workflow_dispatch:
-  'push':
-    'branches':
-      - 'main'
-  'pull_request':
+  push:
+    branches:
+      - main
+  pull_request:
 
-'jobs':
-  'build-release':
-    'runs-on': 'ubuntu-latest'
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
 #     defaults:
 #       run:
 #         working-directory: ./app
 
-    'steps':
-    - 'name': 'Checkout'
-      'uses': 'actions/checkout@v3'
-      'with':
-        'fetch-depth': 0
+    steps:
+    - name: 'Checkout'
+      uses: 'actions/checkout@v3'
+      with:
+        fetch-depth: 0
 
-    - name: Checkout AdguardHome Official Repository
-      uses: actions/checkout@v3
+    - name: 'Checkout AdguardHome Official Repository'
+      uses: 'actions/checkout@v3'
       with:
         repository: AdguardTeam/AdGuardHome
         path: ${{ env.ADGUARDHOME_BUILD_DIR }}
 
-    - name: Fetch Dark Theme Patch
-      working-directory: ${{ env.ADGUARDHOME_BUILD_DIR }}
+    - name: 'Fetch Dark Theme Patch'
+      working-directory: '${{ env.ADGUARDHOME_BUILD_DIR }}'
       run: |
         wget https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/patch-1.0/adguardhome-dark-mustard-theme.patch
 
-    - name: Apply Dark Theme Patch
-      working-directory: ${{ env.ADGUARDHOME_BUILD_DIR }}
+    - name: 'Apply Dark Theme Patch'
+      working-directory: '${{ env.ADGUARDHOME_BUILD_DIR }}'
       run: |
         git apply adguardhome-dark-mustard-theme.patch
 
-    - 'name': 'Set up Go'
-      'uses': 'actions/setup-go@v3'
-      'with':
-        'go-version': '${{ env.GO_VERSION }}'
-    - 'name': 'Set up Node'
-      'uses': 'actions/setup-node@v1'
-      'with':
-        'node-version': '${{ env.NODE_VERSION }}'
+    - name: 'Set up Go'
+      uses: 'actions/setup-go@v3'
+      with:
+        go-version: '${{ env.GO_VERSION }}'
+    - name: 'Set up Node'
+      uses: 'actions/setup-node@v1'
+      with:
+        node-version: '${{ env.NODE_VERSION }}'
 
-    - 'name': 'Set up Go modules cache'
-      'uses': 'actions/cache@v3'
-      'with':
-        'path': '~/go/pkg/mod'
-        'key': "${{ runner.os }}-go-${{ hashFiles(format('{0}/go.sum', env.ADGUARDHOME_BUILD_DIR)) }}"
-        'restore-keys': '${{ runner.os }}-go-'
+    - name: 'Set up Go modules cache'
+      uses: 'actions/cache@v3'
+      with:
+        path: '~/go/pkg/mod'
+        key: "${{ runner.os }}-go-${{ hashFiles(format('{0}/go.sum', env.ADGUARDHOME_BUILD_DIR)) }}"
+        restore-keys: '${{ runner.os }}-go-'
 
-    - 'name': 'Get npm cache directory'
-      'id': 'npm-cache'
-      'run': |
+    - name: 'Get npm cache directory'
+      id: 'npm-cache'
+      run: |
         echo "npm_cache_dir=$(npm config get cache)" >> $GITHUB_ENV
 
-    - 'name': 'Set up npm cache'
-      'uses': 'actions/cache@v3'
-      'with':
-        'path': '${{ env.npm_cache_dir }}'
-        'key': "${{ runner.os }}-node-${{ hashFiles(format('{0}/client/package-lock.json', env.ADGUARDHOME_BUILD_DIR)) }}"
-        'restore-keys': '${{ runner.os }}-node-'
+    - name: 'Set up npm cache'
+      uses: 'actions/cache@v3'
+      with:
+        path: '${{ env.npm_cache_dir }}'
+        key: "${{ runner.os }}-node-${{ hashFiles(format('{0}/client/package-lock.json', env.ADGUARDHOME_BUILD_DIR)) }}"
+        restore-keys: '${{ runner.os }}-node-'
 
     # Login to docker and Github CR so build-docker can push images out
-    - name: Login to DockerHub
-      uses: docker/login-action@v2
+    - name: 'Login to DockerHub'
+      uses: 'docker/login-action@v2'
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Log in to the Github Container registry
-      uses: docker/login-action@v2
+    - name: 'Log in to the Github Container registry'
+      uses: 'docker/login-action@v2'
       with:
-        registry: ghcr.io
+        registry: 'ghcr.io'
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - 'name': 'Set up QEMU'
-      'uses': 'docker/setup-qemu-action@v2'
+    - name: 'Set up QEMU'
+      uses: 'docker/setup-qemu-action@v2'
 
-    - 'name': 'Set up Docker Buildx'
-      'uses': 'docker/setup-buildx-action@v2'
+    - name: 'Set up Docker Buildx'
+      uses: 'docker/setup-buildx-action@v2'
 
-    - 'name': 'Run snapshot build'
-      'working-directory': ${{ env.ADGUARDHOME_BUILD_DIR }}
-      'run': 'make BUILD_SNAP=0 SIGN=0 VERBOSE=1 OS="linux" ARCH="amd64 arm" SNAP=0 DOCKER_IMAGE_NAME="iganesh/adguardhome-dark" GITHUB_IMAGE_NAME="${{ github.repository }}" build-release build-docker'
-
-    - 'name': 'Generate a Release Tag'
-      'working-directory': ${{ env.ADGUARDHOME_BUILD_DIR }}
-      'id': 'build-version'
+    - name: 'Generate a Release Tag'
+      working-directory: ${{ env.ADGUARDHOME_BUILD_DIR }}
+      id: build-version
       run: |
-        echo "release_tag=$( git ls-remote --tags --refs --sort="v:refname" https://github.com/AdguardTeam/AdGuardHome.git | awk -F/ 'END{print$NF}' )-dark" >> $GITHUB_ENV
+        latest_version=$( git -C "./" describe HEAD | sed 's|\(.*\)-.*|\1|' )
+        datetime_now=$( TZ=":America/Chicago" date '+%Y%m%d.%H%M' )
+        echo "release_tag=${datetime_now}" >> $GITHUB_ENV
+        echo "release_name=${latest_version}-dark" >> $GITHUB_ENV
+        # echo "release_tag=$( git ls-remote --tags --refs --sort="v:refname" https://github.com/AdguardTeam/AdGuardHome.git | awk -F/ 'END{print$NF}' )" >> $GITHUB_ENV
 
-    - name: Publish Releases
-      uses: ncipollo/release-action@v1
+    - name: 'Build AdGuardHome'
+      working-directory: ${{ env.ADGUARDHOME_BUILD_DIR }}
+      run: 'make VERSION=${{ env.release_name }} BUILD_SNAP=0 SIGN=0 VERBOSE=1 OS="linux" ARCH="amd64 arm" SNAP=0 DOCKER_IMAGE_NAME="iganesh/adguardhome-dark" GITHUB_IMAGE_NAME="${{ github.repository }}" build-release build-docker'
+
+    - name: 'Publish Releases'
+      uses: 'ncipollo/release-action@v1'
       with:
         artifacts: "${{ env.ADGUARDHOME_BUILD_DIR}}/dist/*.tar.gz"
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ env.release_tag }}
+        name: ${{ env.release_name }}
+        allowUpdates: true
 
-  'notify':
-    'needs':
-    - 'build-release'
+  notify:
+    needs:
+    - build-release
     # Secrets are not passed to workflows that are triggered by a pull request
     # from a fork.
     #
@@ -123,7 +129,7 @@
           github.event.pull_request.head.repo.full_name == github.repository
         )
       }}
-    'runs-on': 'ubuntu-latest'
+    runs-on: ubuntu-latest
     steps:
       - name: Notify over Telegram
         uses: appleboy/telegram-action@master
