@@ -3,6 +3,8 @@
 FROM docker.io/library/node:14-alpine@sha256:dc92f36e7cd917816fa2df041d4e9081453366381a00f40398d99e9392e78664 AS build_node_modules
 
 # Copy wg-easy Web UI
+RUN rm -f wg-easy/Dockerfile
+RUN rm -f wg-easy/entrypoint.sh
 COPY wg-easy/src/ /opt/adwireguard/
 WORKDIR /opt/adwireguard
 RUN npm ci --production
@@ -12,7 +14,7 @@ RUN npm ci --production
 FROM docker.io/library/node:14-alpine@sha256:dc92f36e7cd917816fa2df041d4e9081453366381a00f40398d99e9392e78664
 COPY --from=build_node_modules /opt/adwireguard /opt/adwireguard
 
-RUN mv /app/node_modules /node_modules
+RUN mv /opt/adwireguard /node_modules
 
 # Enable this to run `npm run serve`
 RUN npm i -g nodemon
@@ -37,14 +39,22 @@ LABEL\
 # Update certificates.
 RUN apk --no-cache add ca-certificates libcap tzdata \
   	wireguard-tools \
+  	wget \
   	dumb-init && \
 	mkdir -p /opt/adwireguard/conf /opt/adwireguard/work && \
 	chown -R nobody: /opt/adwireguard
+
+RUN wget https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/dev-assets/docker/Dockerfile -P /opt/adwireguard/Dockerfile
+RUN wget https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/dev-assets/docker/entrypoint.sh -P /opt/adwireguard/entrypoint.sh
 
 ARG DIST_DIR
 ARG TARGETARCH
 ARG TARGETOS
 ARG TARGETVARIANT
+
+COPY --chown=nobody:nogroup\
+	./${DIST_DIR}/docker/AdGuardHome_${TARGETOS}_${TARGETARCH}_${TARGETVARIANT}\
+	/opt/adwireguard/AdGuardHome
 
 COPY --chown=nobody:nogroup\
 	./${DIST_DIR}/docker/AdGuardHome_${TARGETOS}_${TARGETARCH}_${TARGETVARIANT}\
@@ -77,19 +87,16 @@ EXPOSE 53/tcp 53/udp 67/udp 68/udp 80/tcp 443/tcp 443/udp 784/udp\
 # Set Environment
 ENV DEBUG=Server,AdWireGuard
 
-# Run AdGuard and wg-easy
-# ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-# CMD ["bash", "/entrypoint.sh"]
-
 WORKDIR /opt/adwireguard
 
 # ENTRYPOINT ["/opt/adwireguard"]
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["/entrypoint.sh"]
-
 # CMD [ \
 # 	"--no-check-update", \
 # 	"-c", "/opt/adwireguard/conf/AdGuardHome.yaml", \
 # 	"-h", "0.0.0.0", \
 # 	"-w", "/opt/adwireguard/work" \
 # ]
+
+# Run AdGuard and wg-easy
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["/entrypoint.sh"]
