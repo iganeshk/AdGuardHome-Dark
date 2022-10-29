@@ -1,11 +1,13 @@
 # A docker file for scripts/make/build-docker.sh.
 
+FROM alpine:3.16.2
+RUN ls -lsa
+
 FROM docker.io/library/node:14-alpine@sha256:dc92f36e7cd917816fa2df041d4e9081453366381a00f40398d99e9392e78664 AS build_node_modules
 
 # Copy wg-easy Web UI
 RUN ls -lsa
-RUN echo ${DIST_DIR}
-COPY ./wg-easy/src/ /opt/adwireguard/
+COPY wg-easy/src/ /opt/adwireguard/
 WORKDIR /opt/adwireguard
 RUN npm ci --production
 
