@@ -44,8 +44,8 @@ RUN apk --no-cache add ca-certificates libcap tzdata \
 	mkdir -p /opt/adwireguard/conf /opt/adwireguard/work && \
 	chown -R nobody: /opt/adwireguard
 
-RUN wget https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/dev-assets/docker/Dockerfile -P /opt/adwireguard/Dockerfile
-RUN wget https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/dev-assets/docker/entrypoint.sh -P /opt/adwireguard/entrypoint.sh
+# RUN wget https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/dev-assets/docker/Dockerfile -P /opt/adwireguard/Dockerfile
+# RUN wget https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/dev-assets/docker/entrypoint.sh -P /opt/adwireguard/entrypoint.sh
 
 ARG DIST_DIR
 ARG TARGETARCH
