@@ -43,6 +43,7 @@ RUN apk --no-cache add ca-certificates libcap tzdata \
 # # Enable this to run `npm run serve`
 # RUN npm i -g nodemon
 
+ARG WG_PATH
 ARG DIST_DIR
 ARG TARGETARCH
 ARG TARGETOS
@@ -57,17 +58,26 @@ COPY --chown=nobody:nogroup\
 	./${DIST_DIR}/docker/AdGuardHome_${TARGETOS}_${TARGETARCH}_${TARGETVARIANT}\
 	/opt/adwireguard/AdGuardHome
 
-RUN pwd\
-	./${DIST_DIR}/docker/AdGuardHome_${TARGETOS}_${TARGETARCH}_${TARGETVARIANT}
+COPY --chown=nobody:nogroup\
+	./${WG_PATH}/src\
+	/opt/adwireguard/
 
-RUN pwd
+# RUN pwd\
+# 	./${DIST_DIR}/docker/AdGuardHome_${TARGETOS}_${TARGETARCH}_${TARGETVARIANT}
 
-RUN ls -lsa ./${DIST_DIR}
-RUN pwd ./${DIST_DIR}
+# RUN pwd
 
 COPY --chown=nobody:nogroup\
 	./${DIST_DIR}/docker/AdGuardHome_${TARGETOS}_${TARGETARCH}_${TARGETVARIANT}\
 	/opt/adwireguard/AdGuardHome
+
+COPY --chown=nobody:nogroup\
+	./${WG_PATH}/src\
+	/opt/adwireguard/
+
+
+RUN ls -lsa /opt
+RUN ls -ls /opt/adwireguard
 
 RUN setcap 'cap_net_bind_service=+eip' /opt/adwireguard/AdGuardHome
 
