@@ -28,7 +28,7 @@ RUN apk --no-cache add ca-certificates libcap tzdata \
 	mkdir -p /opt/adwireguard/conf /opt/adwireguard/work && \
 	chown -R nobody: /opt/adwireguard
 
-FROM docker.io/library/node:14-alpine@sha256:dc92f36e7cd917816fa2df041d4e9081453366381a00f40398d99e9392e78664 AS build_node_modules
+# FROM docker.io/library/node:14-alpine@sha256:dc92f36e7cd917816fa2df041d4e9081453366381a00f40398d99e9392e78664 AS build_node_modules
 
 # List Dir
 RUN ls -lsa
@@ -39,7 +39,7 @@ RUN npm ci --production
 
 # Copy build result to a new image.
 # This saves a lot of disk space.
-FROM docker.io/library/node:14-alpine@sha256:dc92f36e7cd917816fa2df041d4e9081453366381a00f40398d99e9392e78664
+# FROM docker.io/library/node:14-alpine@sha256:dc92f36e7cd917816fa2df041d4e9081453366381a00f40398d99e9392e78664
 COPY --from=build_node_modules /opt/adwireguard /opt/adwireguard
 
 RUN mv /opt/adwireguard /node_modules
