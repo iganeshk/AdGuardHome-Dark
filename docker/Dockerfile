@@ -3,24 +3,6 @@
 FROM alpine:3.16.2
 RUN ls -lsa
 
-FROM docker.io/library/node:14-alpine@sha256:dc92f36e7cd917816fa2df041d4e9081453366381a00f40398d99e9392e78664 AS build_node_modules
-
-# Copy wg-easy Web UI
-RUN ls -lsa
-COPY wg-easy/src/ /opt/adwireguard/
-WORKDIR /opt/adwireguard
-RUN npm ci --production
-
-# Copy build result to a new image.
-# This saves a lot of disk space.
-FROM docker.io/library/node:14-alpine@sha256:dc92f36e7cd917816fa2df041d4e9081453366381a00f40398d99e9392e78664
-COPY --from=build_node_modules /opt/adwireguard /opt/adwireguard
-
-RUN mv /opt/adwireguard /node_modules
-
-# Enable this to run `npm run serve`
-RUN npm i -g nodemon
-
 ARG BUILD_DATE
 ARG VERSION
 ARG VCS_REF
@@ -45,6 +27,25 @@ RUN apk --no-cache add ca-certificates libcap tzdata \
   	dumb-init && \
 	mkdir -p /opt/adwireguard/conf /opt/adwireguard/work && \
 	chown -R nobody: /opt/adwireguard
+
+FROM docker.io/library/node:14-alpine@sha256:dc92f36e7cd917816fa2df041d4e9081453366381a00f40398d99e9392e78664 AS build_node_modules
+
+# List Dir
+RUN ls -lsa
+# Copy wg-easy Web UI
+COPY wg-easy/src/ /opt/adwireguard/
+WORKDIR /opt/adwireguard
+RUN npm ci --production
+
+# Copy build result to a new image.
+# This saves a lot of disk space.
+FROM docker.io/library/node:14-alpine@sha256:dc92f36e7cd917816fa2df041d4e9081453366381a00f40398d99e9392e78664
+COPY --from=build_node_modules /opt/adwireguard /opt/adwireguard
+
+RUN mv /opt/adwireguard /node_modules
+
+# Enable this to run `npm run serve`
+RUN npm i -g nodemon
 
 # RUN wget https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/dev-assets/docker/Dockerfile -P /opt/adwireguard/Dockerfile
 # RUN wget https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/dev-assets/docker/entrypoint.sh -P /opt/adwireguard/entrypoint.sh
