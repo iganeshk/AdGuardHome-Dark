@@ -22,8 +22,7 @@ LABEL\
 # Update certificates.
 RUN apk --no-cache add ca-certificates libcap tzdata \
   	wireguard-tools \
-  	git wget curl\
-  	dumb-init && \
+  	wget curl libcap dumb-init &&\
 	mkdir -p /opt/adwireguard/conf /opt/adwireguard/work && \
 	chown -R nobody: /opt/adwireguard
 
@@ -49,11 +48,13 @@ ARG TARGETARCH
 ARG TARGETOS
 ARG TARGETVARIANT
 
-COPY --chown=nobody:nogroup\
+COPY \
+	#--chown=nobody:nogroup\
 	./${DIST_DIR}/docker/AdGuardHome_${TARGETOS}_${TARGETARCH}_${TARGETVARIANT}\
 	/opt/adwireguard/AdGuardHome
 
-COPY --chown=nobody:nogroup\
+COPY \
+	#--chown=nobody:nogroup\
 	./${DIST_DIR}/docker/AdGuardHome_${TARGETOS}_${TARGETARCH}_${TARGETVARIANT}\
 	/opt/adwireguard/AdGuardHome
 
@@ -62,9 +63,11 @@ COPY --chown=nobody:nogroup\
 
 RUN \
   curl --location https://codeload.github.com/iganeshk/wg-easy-dark/tar.gz/refs/heads/production \
-    | tar xz --directory /opt/adwireguard --strip-components 1 && \
-  cd /opt/adwireguard && \
-  npm ci --production
+    | tar xz --directory /opt/adwireguard --strip-components 1
+
+RUN cd /opt/adwireguard 
+RUN npm ci --production
+RUN ls -lsa /opt/adwireguard
 
 FROM docker.io/library/node:14-alpine@sha256:dc92f36e7cd917816fa2df041d4e9081453366381a00f40398d99e9392e78664
 COPY --from=build_adwireguard /opt/adwireguard /opt/adwireguard
