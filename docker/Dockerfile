@@ -50,7 +50,7 @@ RUN curl -o /opt/adwireguard/wg-easy-dark/entrypoint.sh https://raw.githubuserco
 RUN rm -rf /opt/adwireguard/wg-easy-dark
 
 WORKDIR /opt/adwireguard
-RUN curl -o entrypoint.sh https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/dev-assets/docker/entrypoint.sh
+RUN curl -o entrypoint.sh https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/dev-assets/docker/docker-entrypoint-1.sh
 RUN chmod 755 entrypoint.sh
 RUN npm ci --production
 
