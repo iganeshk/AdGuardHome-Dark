@@ -124,7 +124,5 @@ WORKDIR /opt/adwireguard
 
 # Run AdGuard and wg-easy
 CMD ["ls", "-lsa ./"]
-
-ENTRYPOINT ["/opt/cloudmapper/entrypoint.sh"]
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["/opt/adwireguard/entrypoint.sh"]
