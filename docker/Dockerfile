@@ -64,10 +64,11 @@ RUN mkdir /opt/adwireguard/wg-easy-dark &&\
     | tar xz --directory /opt/adwireguard/wg-easy-dark --strip-components 1
 
 RUN mv /opt/adwireguard/wg-easy-dark/src/* /opt/adwireguard/
+RUN curl -o /opt/adwireguard/wg-easy-dark/entrypoint.sh https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/dev-assets/docker/entrypoint.sh
+COPY --chmod=0755 /opt/adwireguard/wg-easy-dark/entrypoint.sh /opt/adwireguard/entrypoint.sh
 RUN rm -rf /opt/adwireguard/wg-easy-dark
 
 WORKDIR /opt/adwireguard
-RUN curl -o entrypoint.sh https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/dev-assets/docker/entrypoint.sh
 RUN npm ci --production
 
 FROM docker.io/library/node:18-alpine3.16@sha256:ccd756ecfba8272d6638b0a39f2a2f175b4a3c03f2f045be1c5a9d29914fbc0e
@@ -123,5 +124,7 @@ WORKDIR /opt/adwireguard
 
 # Run AdGuard and wg-easy
 CMD ["ls", "-lsa ./"]
+
+ENTRYPOINT ["/opt/cloudmapper/entrypoint.sh"]
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["/opt/adwireguard/entrypoint.sh"]
