@@ -40,7 +40,7 @@ COPY \
 COPY \
 	#--chown=nobody:nogroup\
 	# ./${WG_PATH}/ /opt/adwireguard/
-	./${DIST_DIR}/${WG_PATH}/ /opt/adwireguard/${WG_PATH}
+	./${DIST_DIR}/docker/${WG_PATH}/ /opt/adwireguard/${WG_PATH}
 
 # # Clone and Build wg-easy
 # RUN mkdir /opt/adwireguard/wg-easy-dark &&\
