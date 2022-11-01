@@ -1,0 +1,150 @@
+diff --git a/scripts/make/build-docker.sh b/scripts/make/build-docker.sh
+index 917e7771..19cbedc2 100644
+--- a/scripts/make/build-docker.sh
++++ b/scripts/make/build-docker.sh
+@@ -32,12 +32,10 @@ sudo_cmd="${SUDO:-}"
+ readonly sudo_cmd
+ 
+ docker_platforms="\
+-linux/386,\
+ linux/amd64,\
+ linux/arm/v6,\
+ linux/arm/v7,\
+-linux/arm64,\
+-linux/ppc64le"
++linux/arm64"
+ readonly docker_platforms
+ 
+ build_date="$( date -u +'%Y-%m-%dT%H:%M:%SZ' )"
+@@ -48,6 +46,18 @@ readonly build_date
+ docker_image_name="${DOCKER_IMAGE_NAME:-adguardhome-dev}"
+ readonly docker_image_name
+ 
++github_image_name="${GITHUB_IMAGE_NAME:-adguardhome-dev}"
++github_image_name=$(echo $github_image_name | awk '{print tolower($0)}' )
++readonly github_image_name
++
++if [ "${RELEASE_TAG:-}" = '' ]
++then
++	release_tag="$( TZ=":America/Chicago" date '+%Y%m%d.%H%M' )CST"
++else
++	release_tag=${RELEASE_TAG}
++fi
++readonly release_tag
++
+ # Set DOCKER_OUTPUT to 'type=image,name=adguard/adguard-home,push=true' if you
+ # want (and are allowed) to push to DockerHub.
+ #
+@@ -55,9 +65,12 @@ readonly docker_image_name
+ # ls", change type to docker and also set docker_platforms to a single platform.
+ #
+ # See https://github.com/docker/buildx/issues/166.
+-docker_output="${DOCKER_OUTPUT:-type=image,name=${docker_image_name},push=false}"
++docker_output="${DOCKER_OUTPUT:-type=image,name=${docker_image_name},push=true}"
+ readonly docker_output
+ 
++github_output="type=image,name=${github_image_name},push=true"
++readonly github_output
++
+ case "$channel"
+ in
+ ('release')
+@@ -75,7 +88,9 @@ in
+ 	;;
+ ('development')
+ 	docker_image_full_name="${docker_image_name}"
+-	docker_tags=''
++	docker_tags="--tag ${docker_image_name}:latest --tag ${docker_image_name}:$release_tag"
++	github_image_full_name="${github_image_name}"
++	github_tags="--tag ghcr.io/${github_image_name}:latest"
+ 	;;
+ (*)
+ 	echo "invalid channel '$channel', supported values are\
+@@ -84,6 +99,7 @@ in
+ 	;;
+ esac
+ readonly docker_image_full_name docker_tags
++readonly github_image_full_name github_tags
+ 
+ # Copy the binaries into a new directory under new names, so that it's eaiser to
+ # COPY them later.  DO NOT remove the trailing underscores.  See file
+@@ -92,8 +108,8 @@ dist_docker="${dist_dir}/docker"
+ readonly dist_docker
+ 
+ mkdir -p "$dist_docker"
+-cp "${dist_dir}/AdGuardHome_linux_386/AdGuardHome/AdGuardHome"\
+-	"${dist_docker}/AdGuardHome_linux_386_"
++# cp "${dist_dir}/AdGuardHome_linux_386/AdGuardHome/AdGuardHome"\
++# 	"${dist_docker}/AdGuardHome_linux_386_"
+ cp "${dist_dir}/AdGuardHome_linux_amd64/AdGuardHome/AdGuardHome"\
+ 	"${dist_docker}/AdGuardHome_linux_amd64_"
+ cp "${dist_dir}/AdGuardHome_linux_arm64/AdGuardHome/AdGuardHome"\
+@@ -102,8 +118,12 @@ cp "${dist_dir}/AdGuardHome_linux_arm_6/AdGuardHome/AdGuardHome"\
+ 	"${dist_docker}/AdGuardHome_linux_arm_v6"
+ cp "${dist_dir}/AdGuardHome_linux_arm_7/AdGuardHome/AdGuardHome"\
+ 	"${dist_docker}/AdGuardHome_linux_arm_v7"
+-cp "${dist_dir}/AdGuardHome_linux_ppc64le/AdGuardHome/AdGuardHome"\
+-	"${dist_docker}/AdGuardHome_linux_ppc64le_"
++# cp "${dist_dir}/AdGuardHome_linux_ppc64le/AdGuardHome/AdGuardHome"\
++# 	"${dist_docker}/AdGuardHome_linux_ppc64le_"
++cp -r "${dist_dir}/entrypoint.sh"\
++	"${dist_docker}/entrypoint.sh"
++cp -r "${dist_dir}/${WG_PATH}"\
++	"${dist_docker}/${WG_PATH}"
+ 
+ # Don't use quotes with $docker_tags and $debug_flags because we want word
+ # splitting and or an empty space if tags are empty.
+@@ -112,11 +132,13 @@ $sudo_cmd docker\
+ 	buildx build\
+ 	--build-arg BUILD_DATE="$build_date"\
+ 	--build-arg DIST_DIR="$dist_dir"\
++	--build-arg WG_PATH="${WG_PATH}"\
+ 	--build-arg VCS_REF="$commit"\
+ 	--build-arg VERSION="$version"\
+ 	--output "$docker_output"\
+ 	--platform "$docker_platforms"\
+ 	$docker_tags\
++	$github_tags\
+ 	-t "$docker_image_full_name"\
+ 	-f ./scripts/make/Dockerfile\
+ 	.
+diff --git a/scripts/make/build-release.sh b/scripts/make/build-release.sh
+index 1c8cb9c0..e4b2f916 100644
+--- a/scripts/make/build-release.sh
++++ b/scripts/make/build-release.sh
+@@ -110,7 +110,7 @@ log "checking tools"
+ # Make sure we fail gracefully if one of the tools we need is missing.  Use
+ # alternatives when available.
+ use_shasum='0'
+-for tool in gpg gzip sed sha256sum snapcraft tar zip
++for tool in gpg gzip sed sha256sum tar zip
+ do
+ 	if ! command -v "$tool" > /dev/null
+ 	then
+diff --git a/scripts/make/version.sh b/scripts/make/version.sh
+index 68e84e9c..e3ac1e17 100644
+--- a/scripts/make/version.sh
++++ b/scripts/make/version.sh
+@@ -75,7 +75,12 @@ case "$channel"
+ in
+ ('development')
+ 	# Use the dummy version for development builds.
+-	version='v0.0.0'
++	version="${VERSION:-1}"
++	if [ "$version" = '' ]
++	then
++		version='v0.0.0'
++	fi
++	readonly version
+ 	;;
+ ('edge')
+ 	# last_minor_zero is the last new minor release.
+@@ -128,7 +133,7 @@ in
+ esac
+ 
+ # Finally, make sure that we don't output invalid versions.
+-if ! echo "$version" | grep -E -e '^v[0-9]+\.[0-9]+\.[0-9]+(-[ab]\.[0-9]+)?(\+[[:xdigit:]]+)?$' -q
++if ! echo "$version" | grep -E -e '^v[0-9]+\.[0-9]+\.[0-9]+(-[ab]\.[0-9]+)?(\-[[:alnum:]]+)?$' -q
+ then
+ 	echo "generated an invalid version '$version'" 1>&2
+ 
