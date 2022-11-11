@@ -1,3 +1,12 @@
+<div align="center">archived.</div>
+<hr/>
+
+Project archived in favor of [iganeshk/adwireguard-dark](https://github.com/iganeshk/adwireguard-dark) which is [AdGuardHome Dark](https://github.com/iganeshk/AdGuardHome-Dark) with [wireguard-easy (dark)](https://github.com/iganeshk/wg-easy-dark) docker images and AdGuardHome dark theme binaries.
+
+[iganeshk/adwireguard-dark](https://github.com/iganeshk/adwireguard-dark)
+[wireguard-easy](https://github.com/iganeshk/wg-easy-dark)
+    
+<hr/>
 <p align="center">
   <img src="https://raw.githubusercontent.com/iganeshk/AdGuardHome-Dark/dev-assets/dark-adguardhome.png" width="800px" alt="AdGuard Home Dark Mustard" />
 </p>
@@ -10,7 +19,7 @@
     <a href="https://github.com/AdguardTeam/AdGuardHome">AdguardTeam/AdGuardHome</a>
 </p>
 <br />
-<hr/>
+
 Builds latest AdguardHome sources periodically with dark theme and then publish docker images and binary releases for linux distros based on arm6/7 and amd64.
 
 ## Installation
